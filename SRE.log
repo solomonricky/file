@@ -1,11 +1,24 @@
 Topology - Done
 OSPF - Done
-VLAN - 
-Static Route -
+VLAN - Done
+DHCP - Done
+WLC - Done (Left RADIUS server)
+Static Route - 
 EtherChannel - 
 
 Issue facing:
 OSPF process 10 cannot start. There must be at least one "up" IP interface
+
+IP Address Assignment
+Brunei:
+VLAN 10
+Router G0/0/0.10 : 192.168.10.1
+Wireless LAN Controller: 192.168.10.5
+
+VLAN 100
+Router G0/0/0.100 : 192.168.100.1
+Radius Server: 192.168.100.5
+
 
 RemoteBR-Router
 command:
@@ -34,6 +47,17 @@ command:
     network 192.168.100.0 0.0.0.255 area 0
     network 200.100.100.0 0.0.0.3 area 0
     network 200.100.100.4 0.0.0.3 area 0
+
+    ip dhcp excluded-address 192.168.10.1 192.168.10.10
+    ip dhcp excluded-address 192.168.100.1 192.168.100.10
+
+    ip dhcp pool VLAN-10
+    network 192.168.10.0 255.255.255.0
+    default-router 192.168.10.1
+
+    ip dhcp pool VLAN-100
+    network 192.168.100.0 255.255.255.0
+    default-router 192.168.100.1
 
 HQ-Router
 command:
@@ -75,6 +99,27 @@ command:
     encapsulation dot1Q 50
     ip addr 192.168.50.1 255.255.255.0    
 
+    ip dhcp excluded-address 192.168.1.1 192.168.1.10
+    ip dhcp excluded-address 192.168.2.1 192.168.2.10
+    ip dhcp excluded-address 192.168.3.1 192.168.3.10
+    ip dhcp excluded-address 192.168.50.1 192.168.50.10
+
+    ip dhcp pool VLAN-1
+    network 192.168.1.0 255.255.255.0
+    default-router 192.168.1.1
+
+    ip dhcp pool VLAN-2
+    network 192.168.2.0 255.255.255.0
+    default-router 192.168.2.1
+
+    ip dhcp pool VLAN-3
+    network 192.168.3.0 255.255.255.0
+    default-router 192.168.3.1
+
+    ip dhcp pool VLAN-50
+    network 192.168.50.0 255.255.255.0
+    default-router 192.168.50.1
+
 ServerFarm-Router
 command:
     hostname ServerFarm-Router
@@ -101,7 +146,7 @@ Router3
 command:
     hostname ISP-Router3
 
-    int g0/0/0 
+    int s0/2/0
     no shut
     ip addr 200.100.100.13 255.255.255.252
 
@@ -147,14 +192,15 @@ command:
 
     int g1/0/1
     no shut
-    no switchport
-    ip addr 192.168.100.2 255.255.255.0
+    switchport mode trunk
 
     vlan 100
     name Management
+    ip address 192.168.100.2 255.255.255.0
 
     vlan 10
     name RnD
+    ip address 192.168.10.2 255.255.255.0
 
     vlan 99
     name Blackhole
@@ -162,9 +208,10 @@ command:
     int range g1/0/2 - 3
     switchport mode access
     switchport access vlan 100
-    # int range g1/0/4 - 8
-    # switchport mode trunk
-    # switchport trunk native vlan 100
+    int range g1/0/4 - 8
+    switchport mode trunk
+    switchport trunk native vlan 100
+    switchport trunk encapsulation dot1q
 
 ServerFarm-switch
 command:
