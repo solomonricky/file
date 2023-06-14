@@ -1,0 +1,270 @@
+Topology - Done
+OSPF - Done
+VLAN - 
+Static Route -
+EtherChannel - 
+
+Issue facing:
+OSPF process 10 cannot start. There must be at least one "up" IP interface
+
+RemoteBR-Router
+command:
+    hostname RemoteBR-Router
+
+    int g0/0/0.100
+    no shut
+    encapsulation dot1Q 100
+    ip addr 192.168.100.1 255.255.255.0
+
+    int g0/0/0.10
+    no shut
+    encapsulation dot1Q 10
+    ip addr 192.168.10.1 255.255.255.0    
+
+    int s0/1/0
+    no shut
+    ip addr 200.100.100.1 255.255.255.252
+
+    int s0/1/1
+    no shut
+    ip addr 200.100.100.5 255.255.255.252
+
+    router ospf 10
+    router-id 1.1.1.1
+    network 192.168.100.0 0.0.0.255 area 0
+    network 200.100.100.0 0.0.0.3 area 0
+    network 200.100.100.4 0.0.0.3 area 0
+
+HQ-Router
+command:
+    hostname HQ-Router
+
+    int g0/0/0 
+    no shut
+
+    int s0/1/0
+    no shut
+    ip addr 200.100.100.9 255.255.255.252
+
+    int s0/1/1
+    no shut
+    ip addr 200.100.100.6 255.255.255.252
+
+    router ospf 10
+    router-id 2.2.2.2
+    network 192.168.1.0 0.0.0.255 area 0
+    network 192.168.2.0 0.0.0.255 area 0
+    network 192.168.3.0 0.0.0.255 area 0
+    network 192.168.50.0 0.0.0.255 area 0
+    network 200.100.100.4 0.0.0.3 area 0
+    network 200.100.100.8 0.0.0.3 area 0
+
+    int g0/0/0.10
+    encapsulation dot1Q 10
+    ip addr 192.168.1.1 255.255.255.0
+
+    int g0/0/0.20
+    encapsulation dot1Q 20
+    ip addr 192.168.2.1 255.255.255.0
+
+    int g0/0/0.30
+    encapsulation dot1Q 30
+    ip addr 192.168.3.1 255.255.255.0
+
+    int g0/0/0.50
+    encapsulation dot1Q 50
+    ip addr 192.168.50.1 255.255.255.0    
+
+ServerFarm-Router
+command:
+    hostname ServerFarm-Router
+
+    int g0/0/0.10
+    no shut
+    ip addr 192.51.100.1 255.255.255.0
+    encapsulation dot1q vlan 10
+
+    int s0/1/0
+    no shut
+    ip addr 200.100.100.17 255.255.255.252
+
+    int s0/1/1
+    no shut
+
+    router ospf 10
+    router-id 5.5.5.5
+    network 200.100.100.16 0.0.0.3 area 0
+    network 198.51.100.0 0.0.0.255 area 0
+
+ISP-Cluster
+Router3
+command:
+    hostname ISP-Router3
+
+    int g0/0/0 
+    no shut
+    ip addr 200.100.100.13 255.255.255.252
+
+    int s0/1/0
+    no shut
+    ip addr 200.100.100.2 255.255.255.252
+
+    int s0/1/1
+    no shut
+    ip addr 200.100.100.10 255.255.255.252
+
+    router ospf 10
+    router-id 3.3.3.3
+    network 200.100.100.12 0.0.0.3 area 0
+    network 200.100.100.8 0.0.0.3 area 0
+    network 200.100.100.0 0.0.0.3 area 0
+
+Router4
+command:
+    hostname ISP-Router4
+
+    int g0/0/0 
+    no shut
+    ip addr 200.100.100.14 255.255.255.252
+
+    int s0/1/0
+    no shut
+    ip addr 200.100.100.18 255.255.255.252
+
+    int s0/1/1
+    no shut
+
+    router ospf 10
+    router-id 4.4.4.4
+    network 200.100.100.12 0.0.0.3 area 0
+    network 200.100.100.16 0.0.0.3 area 0
+
+
+RB-MLSW
+command:
+    ip default-gateway 192.168.100.1
+    hostname RB-MLSW
+
+    int g1/0/1
+    no shut
+    no switchport
+    ip addr 192.168.100.2 255.255.255.0
+
+    vlan 100
+    name Management
+
+    vlan 10
+    name RnD
+
+    vlan 99
+    name Blackhole
+
+    int range g1/0/2 - 3
+    switchport mode access
+    switchport access vlan 100
+    # int range g1/0/4 - 8
+    # switchport mode trunk
+    # switchport trunk native vlan 100
+
+ServerFarm-switch
+command:
+    vlan 10
+    name ServerFarm
+    vlan 99
+    name Blackhole
+    vlan 100
+    name Native
+
+    int range f0/1 - 3
+    switchport mode access
+    switchport access vlan 10
+
+    int g0/1
+    switchport mode trunk
+
+HQ DIS-switch
+command:
+    hostname DIS-Switch
+
+    vlan 10
+    name HR
+    vlan 20
+    name Design
+    vlan 30
+    name Delivery
+    vlan 50
+    name Management
+    vlan 99
+    name Blackhole
+    vlan 100
+    name Native
+
+    int g0/1
+    switchport mode trunk
+
+    int f0/1
+    switchport mode access
+    switchport access vlan 30
+    int vlan 30
+    ip address 192.168.3.2 255.255.255.0
+
+    int f0/2
+    switchport mode access
+    switchport access vlan 20
+    int vlan 20
+    ip address 192.168.2.2 255.255.255.0
+
+    int f0/3
+    switchport mode trunk
+
+HQ Delivery
+command:
+    hostname HQ-Delivery
+
+    vlan 30
+    name Delivery
+
+    int f0/1
+    switchport mode access
+    switchport access vlan 30
+
+    int range f0/2 - 3
+    switchport mode access
+    switchport access vlan 30 (HQ Delivery able to ping DIS Switch FA0/1)
+
+HQ Design
+command:
+    hostname HQ-Design
+
+    vlan 20
+    name Design
+
+    int f0/1
+    switchport mode access
+    switchport access vlan 20
+
+    int range f0/2 - 3
+    switchport mode access
+    switchport access vlan 20 (HQ Design able to ping DIS Switch FA0/2)
+
+HQ HR
+command:
+    hostname HQ-HR
+
+    vlan 20
+    name HR
+
+    int f0/1
+    switchport mode trunk
+
+    int range f0/2 - 3
+    switchport mode access 10
+    switchport access vlan 10
+    int vlan 10
+    ip address 192.168.1.2 255.255.255.0
+
+    int f0/4
+    switchport mode access 50
+    switchport access vlan 50
+    int vlan 50
+    ip address 192.168.50.2 255.255.255.0
